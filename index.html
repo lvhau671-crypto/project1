@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Home IoT Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    /* CSS bổ sung để xoay cánh quạt khi motor chạy và tạo hiệu ứng nút bấm điều khiển motor */
+    .fa-spin-custom {
+      animation: fa-spin 1s infinite linear;
+    }
+    .motor-btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    .btn-motor-on { background-color: #3498db !important; }
+    .btn-motor-off { background-color: #7f8c8d !important; }
+  </style>
+</head>
+
+<body>
+  <div class="bg bg1"></div>
+  <div class="bg bg2"></div>
+
+  <main class="dashboard">
+
+  <header class="school-header">
+  <div class="header-inner">
+    <img src="logo.png" alt="Logo trường" class="school-logo">
+
+    <div class="header-content">
+      <h1>TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</h1>
+      <h2>KHOA ĐIỆN - ĐIỆN TỬ</h2>
+      <h3>SMART HOME IOT</h3>
+
+      <div class="header-bottom">
+        <div class="status-box">
+          <span class="dot" id="statusDot"></span>
+          <div>
+            <p>Firebase</p>
+            <h4 id="connectStatus">Đang kết nối...</h4>
+          </div>
+        </div>
+
+        <div id="clock"></div>
+      </div>
+    </div>
+  </div>
+  </header>
+
+    <section class="overview">
+      <div class="overview-card">
+        <i class="fa-solid fa-microchip"></i>
+        <div>
+          <p>Bộ điều khiển</p>
+          <h3>ESP32 Wokwi</h3>
+        </div>
+      </div>
+
+      <div class="overview-card">
+        <i class="fa-solid fa-cloud"></i>
+        <div>
+          <p>Nền tảng</p>
+          <h3>Firebase</h3>
+        </div>
+      </div>
+
+      <div class="overview-card">
+        <i class="fa-solid fa-wifi"></i>
+        <div>
+          <p>Kết nối</p>
+          <h3>Realtime</h3>
+        </div>
+      </div>
+
+      <div class="overview-card">
+        <i class="fa-solid fa-shield-halved"></i>
+        <div>
+          <p>Trạng thái</p>
+          <h3 id="systemStatus">Đang cập nhật</h3>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+
+      <div class="card card-yellow sensor">
+        <div class="card-head">
+          <div>
+            <p>Cảm biến</p>
+            <h2>Nhiệt độ</h2>
+          </div>
+          <div class="icon">
+            <i class="fa-solid fa-temperature-three-quarters"></i>
+          </div>
+        </div>
+
+        <div class="value">
+          <span id="temperature">--</span>
+          <small>°C</small>
+        </div>
+
+        <div class="progress"></div>
+        <span class="sub">DHT Sensor</span>
+      </div>
+
+      <div class="card card-blue sensor">
+        <div class="card-head">
+          <div>
+            <p>Cảm biến</p>
+            <h2>Khoảng cách</h2>
+          </div>
+          <div class="icon">
+            <i class="fa-solid fa-ruler-horizontal"></i>
+          </div>
+        </div>
+
+        <div class="value">
+          <span id="distance">--</span>
+          <small>cm</small>
+        </div>
+
+        <div class="progress"></div>
+        <span class="sub">HC-SR04 Sensor</span>
+      </div>
+
+      <div class="card card-green sensor">
+        <div class="card-head">
+          <div>
+            <p>Cảm biến</p>
+            <h2>Khí gas</h2>
+          </div>
+          <div class="icon">
+            <i class="fa-solid fa-wind"></i>
+          </div>
+        </div>
+
+        <div class="value">
+          <span id="mq">--</span>
+          <small>ADC</small>
+        </div>
+
+        <div class="progress"></div>
+        <span class="sub">MQ Sensor</span>
+      </div>
+
+      <div class="card card-orange control-card">
+        <div class="card-head">
+          <div>
+            <p>Thiết bị</p>
+            <h2>Motor</h2>
+          </div>
+          <span id="motorBadge" class="badge">--</span>
+        </div>
+
+        <div class="motor-icon">
+          <i id="motorIcon" class="fa-solid fa-fan"></i>
+        </div>
+
+        <h3 id="motorStatus">Đang cập nhật</h3>
+
+        <div class="motor-btn-group">
+          <button class="btn btn-on btn-motor-on" id="btnMotorOn">
+            <i class="fa-solid fa-play"></i> Quay
+          </button>
+          <button class="btn btn-off btn-motor-off" id="btnMotorOff">
+            <i class="fa-solid fa-stop"></i> Dừng
+          </button>
+        </div>
+      </div>
+
+      <div class="card card-red sensor" id="dangerCard">
+        <div class="card-head">
+          <div>
+            <p>Cảnh báo</p>
+            <h2>Nguy hiểm</h2>
+          </div>
+          <div class="icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+        </div>
+
+        <div class="warning-display">
+          <span id="dangerStatus" style="font-weight: bold;">--</span>
+        </div>
+
+        <span class="sub">Safety Warning</span>
+      </div>
+
+      <div class="card card-purple control-card">
+        <div class="card-head">
+          <div>
+            <p>Thiết bị cảnh báo</p>
+            <h2>Đèn</h2>
+          </div>
+          <span id="ledBadge">OFF</span>
+        </div>
+
+        <div class="bulb-wrap" id="bulbWrap">
+          <div class="light-ray"></div>
+          <i id="bulb" class="fa-solid fa-lightbulb bulb off"></i>
+        </div>
+
+        <h3 id="ledStatus">Đèn đang tắt</h3>
+
+        <div class="btn-group">
+          <button class="btn btn-on" id="btnLedOn">
+            <i class="fa-solid fa-power-off"></i>
+            Bật đèn
+          </button>
+
+          <button class="btn btn-off" id="btnLedOff">
+            <i class="fa-solid fa-circle-xmark"></i>
+            Tắt đèn
+          </button>
+        </div>
+
+        <span class="sub">Đèn tự bật khi có cảnh báo nguy hiểm</span>
+      </div>
+
+    </section>
+
+    <section class="bottom-panel">
+      <div class="panel warning-panel">
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo hệ thống</h2>
+        <p>Hệ thống theo dõi nhiệt độ, khoảng cách, khí gas và trạng thái motor theo thời gian thực.</p>
+
+        <div class="alert-row">
+          <span>Nhiệt độ</span>
+          <b id="tempAlert">Đang giám sát</b>
+        </div>
+
+        <div class="alert-row">
+          <span>Khoảng cách</span>
+          <b id="distanceAlert">Đang giám sát</b>
+        </div>
+
+        <div class="alert-row">
+          <span>Khí gas</span>
+          <b id="mqAlert">Đang giám sát</b>
+        </div>
+      </div>
+
+      <div class="panel status-panel">
+        <h2><i class="fa-solid fa-circle-info"></i> Trạng thái thiết bị</h2>
+        <p>Dữ liệu được cập nhật trực tiếp từ Firebase Realtime Database.</p>
+
+        <div class="device-status">
+          <div class="status-item">
+            <span>Motor</span>
+            <b id="motorStateText">Đang cập nhật</b>
+          </div>
+
+          <div class="status-item">
+            <span>Đèn</span>
+            <b id="lightStateText">Đang cập nhật</b>
+          </div>
+
+          <div class="status-item">
+            <span>Cảnh báo</span>
+            <b id="dangerStateText">Đang cập nhật</b>
+          </div>
+
+          <div class="status-item">
+            <span>Firebase</span>
+            <b id="firebaseStateText">Đang kết nối</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- ===== PHẦN THÊM: ĐÁNH GIÁ ĐỘ TRỄ TRUYỀN DỮ LIỆU ===== -->
+    <section class="latency-panel">
+      <h2><i class="fa-solid fa-gauge-high"></i> Đánh giá độ trễ truyền dữ liệu</h2>
+      <p>ESP32 gửi gói test lên Firebase, web nhận gói và phản hồi ACK về lại ESP32. ESP32 tính tổng thời gian RTT và lấy RTT/2 làm độ trễ ước lượng một chiều.</p>
+
+      <div class="latency-grid">
+        <div class="latency-item">
+          <span>Packet ID</span>
+          <b id="latencyPacketId">--</b>
+        </div>
+        <div class="latency-item">
+          <span>RTT ESP32 ↔ Web</span>
+          <b id="latencyRtt">-- ms</b>
+        </div>
+        <div class="latency-item">
+          <span>Độ trễ RTT/2</span>
+          <b id="latencyOneWay">-- ms</b>
+        </div>
+        <div class="latency-item">
+          <span>Độ trễ trung bình</span>
+          <b id="latencyAverage">-- ms</b>
+        </div>
+        <div class="latency-item">
+          <span>ESP32 gửi</span>
+          <b id="espSendBits">-- bit</b>
+        </div>
+        <div class="latency-item">
+          <span>Web nhận</span>
+          <b id="webReceiveBits">-- bit</b>
+        </div>
+        <div class="latency-item">
+          <span>Web phản hồi ACK</span>
+          <b id="webAckBits">-- bit</b>
+        </div>
+        <div class="latency-item">
+          <span>ESP32 nhận ACK</span>
+          <b id="espAckReceiveBits">-- bit</b>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PHẦN THÊM: ĐÁNH GIÁ ĐỘ TRỄ 4 NÚT ĐIỀU KHIỂN ===== -->
+    <section class="latency-panel">
+      <h2><i class="fa-solid fa-toggle-on"></i> Đánh giá độ trễ 4 nút điều khiển</h2>
+      <p>Mỗi lần bấm một nút, web gửi lệnh xuống Firebase, ESP32 nhận lệnh và thực hiện thiết bị, sau đó ESP32 phản hồi ACK về web. Web tính RTT = thời điểm nhận ACK - thời điểm bấm nút, và lấy RTT/2 làm độ trễ ước lượng một chiều.</p>
+
+      <div class="command-summary-grid">
+        <div class="latency-item">
+          <span>Nút vừa bấm</span>
+          <b id="cmdLastButton">--</b>
+        </div>
+        <div class="latency-item">
+          <span>Command ID</span>
+          <b id="cmdLatencyId">--</b>
+        </div>
+        <div class="latency-item">
+          <span>Trạng thái ESP32 thực hiện</span>
+          <b id="cmdExecutedState">--</b>
+        </div>
+        <div class="latency-item">
+          <span>Độ trễ nút vừa bấm</span>
+          <b id="cmdLatencyOneWay">-- ms</b>
+        </div>
+      </div>
+
+      <div class="command-latency-table-wrap">
+        <table class="command-latency-table">
+          <thead>
+            <tr>
+              <th>Nút điều khiển</th>
+              <th>Command ID</th>
+              <th>RTT</th>
+              <th>Độ trễ RTT/2</th>
+              <th>Web gửi lệnh</th>
+              <th>ESP32 nhận lệnh</th>
+              <th>ESP32 phản hồi ACK</th>
+              <th>Web nhận ACK</th>
+              <th>Trạng thái ESP32</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Bật đèn</b></td>
+              <td id="cmdLedOnId">--</td>
+              <td id="cmdLedOnRtt">-- ms</td>
+              <td id="cmdLedOnOneWay">-- ms</td>
+              <td id="cmdLedOnWebBits">-- bit</td>
+              <td id="cmdLedOnEspRxBits">-- bit</td>
+              <td id="cmdLedOnEspAckBits">-- bit</td>
+              <td id="cmdLedOnWebAckBits">-- bit</td>
+              <td id="cmdLedOnState">--</td>
+            </tr>
+            <tr>
+              <td><b>Tắt đèn</b></td>
+              <td id="cmdLedOffId">--</td>
+              <td id="cmdLedOffRtt">-- ms</td>
+              <td id="cmdLedOffOneWay">-- ms</td>
+              <td id="cmdLedOffWebBits">-- bit</td>
+              <td id="cmdLedOffEspRxBits">-- bit</td>
+              <td id="cmdLedOffEspAckBits">-- bit</td>
+              <td id="cmdLedOffWebAckBits">-- bit</td>
+              <td id="cmdLedOffState">--</td>
+            </tr>
+            <tr>
+              <td><b>Chạy động cơ</b></td>
+              <td id="cmdMotorOnId">--</td>
+              <td id="cmdMotorOnRtt">-- ms</td>
+              <td id="cmdMotorOnOneWay">-- ms</td>
+              <td id="cmdMotorOnWebBits">-- bit</td>
+              <td id="cmdMotorOnEspRxBits">-- bit</td>
+              <td id="cmdMotorOnEspAckBits">-- bit</td>
+              <td id="cmdMotorOnWebAckBits">-- bit</td>
+              <td id="cmdMotorOnState">--</td>
+            </tr>
+            <tr>
+              <td><b>Dừng động cơ</b></td>
+              <td id="cmdMotorOffId">--</td>
+              <td id="cmdMotorOffRtt">-- ms</td>
+              <td id="cmdMotorOffOneWay">-- ms</td>
+              <td id="cmdMotorOffWebBits">-- bit</td>
+              <td id="cmdMotorOffEspRxBits">-- bit</td>
+              <td id="cmdMotorOffEspAckBits">-- bit</td>
+              <td id="cmdMotorOffWebAckBits">-- bit</td>
+              <td id="cmdMotorOffState">--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p>Đồ án IoT: Giám sát cảm biến và điều khiển thiết bị qua Firebase</p>
+    </footer>
+
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "22VeXLyRN5RAsFW3x4NNv7XRssSWL6NNGYnfcHPB", // API Key tạm thời lấy từ Auth token cũ của bro
+      authDomain: "poject1-9ad6f.firebaseapp.com",
+      databaseURL: "https://poject1-9ad6f-default-rtdb.firebaseio.com",
+      projectId: "poject1-9ad6f",
+      storageBucket: "poject1-9ad6f.appspot.com"
+    };
+
+    // Khởi tạo ứng dụng Web Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    let actualLedStateFromEsp = null;
+
+    function updateLedDisplay(ledState, source = "") {
+      const bulb = document.getElementById("bulb");
+      const ledStatus = document.getElementById("ledStatus");
+      const ledBadge = document.getElementById("ledBadge");
+      const lightStateText = document.getElementById("lightStateText");
+
+      const isOn = ledState === 1 || ledState === true || String(ledState).toUpperCase() === "ON" || String(ledState).toUpperCase() === "TRUE";
+      const isAuto = source === "AUTO_CANH_BAO";
+
+      if (bulb) {
+        if (isOn) {
+          bulb.classList.remove("off");
+          bulb.classList.add("on");
+        } else {
+          bulb.classList.remove("on");
+          bulb.classList.add("off");
+        }
+      }
+
+      if (ledStatus) {
+        ledStatus.innerText = isOn
+          ? (isAuto ? "Đèn đang bật tự động" : "Đèn đang bật")
+          : "Đèn đang tắt";
+      }
+
+      if (ledBadge) {
+        ledBadge.innerText = isOn ? "ON" : "OFF";
+        ledBadge.style.backgroundColor = isOn ? "#2ecc71" : "#e74c3c";
+      }
+
+      if (lightStateText) {
+        lightStateText.innerText = isOn
+          ? (isAuto ? "Bật do ESP32 cảnh báo" : "Bật")
+          : "Tắt";
+        lightStateText.style.color = isOn ? "#2ecc71" : "#e74c3c";
+      }
+    }
+
+    // --- 1. XỬ LÝ LẮNG NGHE DỮ LIỆU TỪ CẢM BIẾN (ESP32 gửi lên) ---
+    const sensorRef = ref(database, 'HeThongGiamSat');
+    onValue(sensorRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Cập nhật trạng thái Firebase kết nối thành công lên giao diện
+        document.getElementById("connectStatus").innerText = "Đã kết nối";
+        document.getElementById("statusDot").style.backgroundColor = "#2ecc71";
+        document.getElementById("firebaseStateText").innerText = "Ổn định";
+        document.getElementById("firebaseStateText").style.color = "#2ecc71";
+
+        // Gán giá trị nhiệt độ
+        const temp = data.nhiet_do !== undefined ? data.nhiet_do : "--";
+        document.getElementById("temperature").innerText = temp;
+        if(temp > 50) {
+          document.getElementById("tempAlert").innerText = "QUÁ NHIỆT!";
+          document.getElementById("tempAlert").style.color = "#e74c3c";
+        } else {
+          document.getElementById("tempAlert").innerText = "An toàn";
+          document.getElementById("tempAlert").style.color = "#2ecc71";
+        }
+
+        // Gán giá trị khoảng cách
+        const dist = data.khoang_cach !== undefined ? data.khoang_cach : "--";
+        document.getElementById("distance").innerText = dist;
+        if(dist > 0 && dist < 50) {
+          document.getElementById("distanceAlert").innerText = "Vật cản gần!";
+          document.getElementById("distanceAlert").style.color = "#f39c12";
+        } else {
+          document.getElementById("distanceAlert").innerText = "An toàn";
+          document.getElementById("distanceAlert").style.color = "#2ecc71";
+        }
+
+        // Gán giá trị khí gas
+        const gas = data.khi_gas !== undefined ? data.khi_gas : "--";
+        document.getElementById("mq").innerText = gas;
+        if(gas > 1800) {
+          document.getElementById("mqAlert").innerText = "RÒ RỈ KHÍ GAS!";
+          document.getElementById("mqAlert").style.color = "#e74c3c";
+        } else {
+          document.getElementById("mqAlert").innerText = "An toàn";
+          document.getElementById("mqAlert").style.color = "#2ecc71";
+        }
+
+        // Xử lý Cảnh báo nguy hiểm
+        const danger = data.canh_bao_nguy_hiem;
+        if (danger === 1) {
+          document.getElementById("dangerStatus").innerText = "NGUY HIỂM";
+          document.getElementById("dangerStatus").style.color = "#e74c3c";
+          document.getElementById("dangerStateText").innerText = "Báo động";
+          document.getElementById("dangerStateText").style.color = "#e74c3c";
+          document.getElementById("systemStatus").innerText = "CẢNH BÁO";
+          document.getElementById("systemStatus").style.color = "#e74c3c";
+        } else {
+          document.getElementById("dangerStatus").innerText = "AN TOÀN";
+          document.getElementById("dangerStatus").style.color = "#2ecc71";
+          document.getElementById("dangerStateText").innerText = "An toàn";
+          document.getElementById("dangerStateText").style.color = "#2ecc71";
+          document.getElementById("systemStatus").innerText = "Hoạt động tốt";
+          document.getElementById("systemStatus").style.color = "#2ecc71";
+        }
+
+        // Xử lý trạng thái ĐÈN THẬT do ESP32 gửi lên.
+        // Ưu tiên trang_thai_den vì đây là trạng thái sau khi ESP32 đã xử lý:
+        // - Web bật/tắt đèn.
+        // - ESP32 tự bật đèn khi có cảnh báo nguy hiểm.
+        if (data.trang_thai_den !== undefined) {
+          actualLedStateFromEsp = Number(data.trang_thai_den);
+          updateLedDisplay(actualLedStateFromEsp, data.nguon_den || "ESP32");
+        } else if (danger === 1) {
+          // Tương thích với code cũ chưa gửi trang_thai_den.
+          actualLedStateFromEsp = 1;
+          updateLedDisplay(1, "AUTO_CANH_BAO");
+        }
+
+        // Xử lý đồ họa Trạng thái Motor
+        const motor = data.trang_thai_motor;
+        if (motor === 1) {
+          document.getElementById("motorStatus").innerText = "Động cơ đang quay";
+          document.getElementById("motorBadge").innerText = "RUN";
+          document.getElementById("motorBadge").style.backgroundColor = "#2ecc71";
+          document.getElementById("motorIcon").classList.add("fa-spin-custom"); // Làm cánh quạt xoay tròn tròn
+          document.getElementById("motorStateText").innerText = "Đang quay";
+          document.getElementById("motorStateText").style.color = "#2ecc71";
+        } else {
+          document.getElementById("motorStatus").innerText = "Động cơ đang dừng";
+          document.getElementById("motorBadge").innerText = "STOP";
+          document.getElementById("motorBadge").style.backgroundColor = "#e74c3c";
+          document.getElementById("motorIcon").classList.remove("fa-spin-custom"); // Dừng xoay cánh quạt
+          document.getElementById("motorStateText").innerText = "Đang dừng";
+          document.getElementById("motorStateText").style.color = "#e74c3c";
+        }
+      }
+    });
+
+    // Lắng nghe nút bấm LED gốc.
+    // Nếu ESP32 đã gửi trang_thai_den thì web ưu tiên trạng thái thật từ ESP32,
+    // không lấy riêng nut_nhan_led để tránh trường hợp web hiện tắt nhưng ESP32 đang tự bật cảnh báo.
+    onValue(ref(database, 'nut_nhan_led'), (snapshot) => {
+      const ledState = snapshot.val();
+      if (actualLedStateFromEsp === null) {
+        updateLedDisplay(ledState, "WEB");
+      }
+    });
+
+    // --- 2. PHẦN THÊM: HÀM HỖ TRỢ ĐO ĐỘ TRỄ VÀ SỐ BIT ---
+    function getUtf8Bits(value) {
+      const text = typeof value === "string" ? value : JSON.stringify(value);
+      return new TextEncoder().encode(text).length * 8;
+    }
+
+    function setText(id, value) {
+      const element = document.getElementById(id);
+      if (element) element.innerText = value;
+    }
+
+    function calculateBitsWithField(object, bitFieldName) {
+      // Tính lặp vài lần vì khi thêm trường số bit vào JSON thì kích thước JSON thay đổi nhẹ
+      let bits = 0;
+      for (let i = 0; i < 4; i++) {
+        object[bitFieldName] = bits;
+        bits = getUtf8Bits(object);
+      }
+      object[bitFieldName] = bits;
+      return bits;
+    }
+
+    // --- 3. PHẦN THÊM: ĐO ĐỘ TRỄ RIÊNG CHO 4 NÚT ĐIỀU KHIỂN WEB -> ESP32 -> WEB ---
+    let commandSequence = 0;
+    let lastCommandAckId = null;
+    const pendingCommands = {};
+
+    const buttonMap = {
+      LED_ON: {
+        label: "Bật đèn",
+        device: "LED",
+        value: 1,
+        action: "BAT_DEN",
+        prefix: "cmdLedOn"
+      },
+      LED_OFF: {
+        label: "Tắt đèn",
+        device: "LED",
+        value: 0,
+        action: "TAT_DEN",
+        prefix: "cmdLedOff"
+      },
+      MOTOR_ON: {
+        label: "Chạy động cơ",
+        device: "MOTOR",
+        value: 1,
+        action: "QUAY_MOTOR",
+        prefix: "cmdMotorOn"
+      },
+      MOTOR_OFF: {
+        label: "Dừng động cơ",
+        device: "MOTOR",
+        value: 0,
+        action: "DUNG_MOTOR",
+        prefix: "cmdMotorOff"
+      }
+    };
+
+    function buildCommandId() {
+      commandSequence++;
+      return Math.floor(Date.now() % 1000000000) + commandSequence;
+    }
+
+    function getButtonKey(device, value) {
+      if (device === "LED" && value === 1) return "LED_ON";
+      if (device === "LED" && value === 0) return "LED_OFF";
+      if (device === "MOTOR" && value === 1) return "MOTOR_ON";
+      if (device === "MOTOR" && value === 0) return "MOTOR_OFF";
+      return "UNKNOWN";
+    }
+
+    function updateButtonLatencyRow(buttonKey, data) {
+      const item = buttonMap[buttonKey];
+      if (!item) return;
+
+      const prefix = item.prefix;
+      if (data.id !== undefined) setText(prefix + "Id", data.id);
+      if (data.rtt !== undefined) setText(prefix + "Rtt", data.rtt);
+      if (data.oneWay !== undefined) setText(prefix + "OneWay", data.oneWay);
+      if (data.webBits !== undefined) setText(prefix + "WebBits", data.webBits);
+      if (data.espRxBits !== undefined) setText(prefix + "EspRxBits", data.espRxBits);
+      if (data.espAckBits !== undefined) setText(prefix + "EspAckBits", data.espAckBits);
+      if (data.webAckBits !== undefined) setText(prefix + "WebAckBits", data.webAckBits);
+      if (data.state !== undefined) setText(prefix + "State", data.state);
+    }
+
+    async function sendControlCommand(buttonKey) {
+      const buttonInfo = buttonMap[buttonKey];
+      if (!buttonInfo) return;
+
+      const device = buttonInfo.device;
+      const value = buttonInfo.value;
+      const action = buttonInfo.action;
+      const commandId = buildCommandId();
+
+      const commandPacket = {
+        id: commandId,
+        type: "WEB_CONTROL_COMMAND",
+        button_key: buttonKey,
+        button_label: buttonInfo.label,
+        device: device,
+        action: action,
+        value: value,
+        web_send_time_ms: Date.now(),
+        web_command_bits: 0
+      };
+
+      const webCommandBits = calculateBitsWithField(commandPacket, "web_command_bits");
+      commandPacket.web_command_bits = webCommandBits;
+
+      pendingCommands[commandId] = {
+        startTime: performance.now(),
+        buttonKey: buttonKey,
+        buttonLabel: buttonInfo.label,
+        device: device,
+        action: action,
+        value: value,
+        webCommandBits: webCommandBits
+      };
+
+      setText("cmdLastButton", buttonInfo.label);
+      setText("cmdLatencyId", commandId);
+      setText("cmdExecutedState", "Đang gửi lệnh xuống ESP32...");
+      setText("cmdLatencyOneWay", "Đang đo...");
+
+      updateButtonLatencyRow(buttonKey, {
+        id: commandId,
+        rtt: "Đang đo...",
+        oneWay: "Đang đo...",
+        webBits: webCommandBits + " bit",
+        espRxBits: "-- bit",
+        espAckBits: "-- bit",
+        webAckBits: "-- bit",
+        state: "Đang gửi lệnh xuống ESP32..."
+      });
+
+      try {
+        // 1) Giữ nguyên đường dẫn điều khiển cũ để giao diện/mạch vẫn tương thích.
+        // 2) Gửi thêm gói lệnh có ID riêng để ESP32 luôn nhận lệnh mới, kể cả bấm lại cùng một nút.
+        if (device === "LED") {
+          await set(ref(database, 'nut_nhan_led'), value);
+        }
+        if (device === "MOTOR") {
+          await set(ref(database, 'nut_nhan_motor'), value);
+        }
+
+        await set(ref(database, 'ControlCommand/latest'), commandPacket);
+        await set(ref(database, 'ControlCommand/byButton/' + buttonKey), commandPacket);
+        await set(ref(database, 'CommandLatency/request'), commandPacket);
+
+        setText("cmdExecutedState", "Đã gửi, đang chờ ESP32 ACK...");
+        updateButtonLatencyRow(buttonKey, {
+          state: "Đã gửi, đang chờ ESP32 ACK..."
+        });
+
+        console.log("========== WEB GỬI LỆNH ĐIỀU KHIỂN ==========");
+        console.log("Nút:", buttonInfo.label);
+        console.log("Command ID:", commandId);
+        console.log("Thiết bị:", device);
+        console.log("Lệnh:", action);
+        console.log("Số bit web gửi lệnh:", webCommandBits, "bit");
+      } catch (error) {
+        console.error("Lỗi gửi lệnh điều khiển:", error);
+        setText("cmdExecutedState", "Lỗi gửi lệnh xuống Firebase");
+        updateButtonLatencyRow(buttonKey, {
+          state: "Lỗi gửi lệnh xuống Firebase"
+        });
+      }
+    }
+
+    // Điều khiển ĐÈN (LED) + đo riêng từng nút
+    document.getElementById("btnLedOn").addEventListener("click", () => {
+      sendControlCommand("LED_ON");
+    });
+    document.getElementById("btnLedOff").addEventListener("click", () => {
+      sendControlCommand("LED_OFF");
+    });
+
+    // Điều khiển ĐỘNG CƠ (MOTOR) + đo riêng từng nút
+    document.getElementById("btnMotorOn").addEventListener("click", () => {
+      sendControlCommand("MOTOR_ON");
+    });
+    document.getElementById("btnMotorOff").addEventListener("click", () => {
+      sendControlCommand("MOTOR_OFF");
+    });
+
+    onValue(ref(database, 'CommandLatency/ack'), (snapshot) => {
+      const ack = snapshot.val();
+      if (!ack || ack.id === undefined) return;
+      if (ack.id === lastCommandAckId) return;
+      lastCommandAckId = ack.id;
+
+      const pending = pendingCommands[ack.id];
+      if (!pending) return;
+
+      const rtt = performance.now() - pending.startTime;
+      const oneWay = rtt / 2.0;
+      const webAckReceiveBits = getUtf8Bits(ack);
+
+      const ackDevice = ack.device || pending.device;
+      const ackValue = Number(ack.value !== undefined ? ack.value : pending.value);
+      const buttonKey = ack.button_key || pending.buttonKey || getButtonKey(ackDevice, ackValue);
+      const buttonLabel = pending.buttonLabel || (buttonMap[buttonKey] ? buttonMap[buttonKey].label : buttonKey);
+
+      const executedState = Number(ack.executed_state || 0);
+      let executedText = executedState === 1 ? "ĐÃ BẬT / ĐANG CHẠY" : "ĐÃ TẮT / ĐANG DỪNG";
+      if (Number(ack.danger_at_execute || 0) === 1 && ackDevice === "MOTOR") {
+        executedText = "DỪNG DO CẢNH BÁO";
+      }
+
+      if (ackDevice === "LED") {
+        actualLedStateFromEsp = executedState;
+        updateLedDisplay(executedState, Number(ack.danger_at_execute || 0) === 1 ? "AUTO_CANH_BAO" : "WEB");
+      }
+
+      setText("cmdLastButton", buttonLabel);
+      setText("cmdLatencyId", ack.id);
+      setText("cmdExecutedState", executedText);
+      setText("cmdLatencyOneWay", oneWay.toFixed(2) + " ms");
+
+      updateButtonLatencyRow(buttonKey, {
+        id: ack.id,
+        rtt: rtt.toFixed(2) + " ms",
+        oneWay: oneWay.toFixed(2) + " ms",
+        webBits: Number(pending.webCommandBits || 0) + " bit",
+        espRxBits: Number(ack.esp_received_bits || 0) + " bit",
+        espAckBits: Number(ack.esp_ack_bits || 0) + " bit",
+        webAckBits: webAckReceiveBits + " bit",
+        state: executedText
+      });
+
+      const commandResult = {
+        id: ack.id,
+        button_key: buttonKey,
+        button_label: buttonLabel,
+        device: ackDevice,
+        action: ack.action || pending.action,
+        value: ackValue,
+        rtt_ms: Number(rtt.toFixed(2)),
+        one_way_ms: Number(oneWay.toFixed(2)),
+        web_command_bits: Number(pending.webCommandBits || 0),
+        esp_received_bits: Number(ack.esp_received_bits || 0),
+        esp_ack_bits: Number(ack.esp_ack_bits || 0),
+        web_ack_receive_bits: webAckReceiveBits,
+        executed_state: executedState
+      };
+
+      set(ref(database, 'CommandLatency/result/' + buttonKey), commandResult);
+      set(ref(database, 'CommandLatency/result_latest'), commandResult);
+      delete pendingCommands[ack.id];
+
+      console.log("========== KẾT QUẢ ĐỘ TRỄ NÚT ĐIỀU KHIỂN ==========");
+      console.log("Nút:", buttonLabel);
+      console.log("Command ID:", ack.id);
+      console.log("RTT Web -> ESP32 -> Web:", rtt.toFixed(2), "ms");
+      console.log("Độ trễ RTT/2:", oneWay.toFixed(2), "ms");
+      console.log("Web gửi lệnh:", pending.webCommandBits, "bit");
+      console.log("ESP32 nhận lệnh:", ack.esp_received_bits, "bit");
+      console.log("ESP32 phản hồi ACK:", ack.esp_ack_bits, "bit");
+      console.log("Web nhận ACK:", webAckReceiveBits, "bit");
+    });
+
+    // --- 4. PHẦN THÊM: ĐO ĐỘ TRỄ ESP32 -> WEB -> ESP32 ---
+    let lastLatencyRequestId = null;
+
+    onValue(ref(database, 'LatencyTest/esp_to_web/request'), (snapshot) => {
+      const packet = snapshot.val();
+      if (!packet || packet.id === undefined) return;
+      if (packet.id === lastLatencyRequestId) return;
+      lastLatencyRequestId = packet.id;
+
+      const webReceivedBits = getUtf8Bits(packet);
+      const espPayloadBits = Number(packet.esp_payload_bits || packet.esp_send_bits || 0);
+
+      const ack = {
+        id: packet.id,
+        type: "WEB_ACK_TO_ESP32",
+        web_receive_time_ms: Date.now(),
+        esp_payload_bits_echo: espPayloadBits,
+        web_received_bits: webReceivedBits,
+        web_ack_bits: 0
+      };
+
+      const ackBits = calculateBitsWithField(ack, "web_ack_bits");
+      set(ref(database, 'LatencyTest/esp_to_web/ack'), ack);
+
+      setText("latencyPacketId", packet.id);
+      setText("espSendBits", espPayloadBits + " bit");
+      setText("webReceiveBits", webReceivedBits + " bit");
+      setText("webAckBits", ackBits + " bit");
+
+      console.log("========== WEB NHẬN GÓI LATENCY ==========");
+      console.log("Packet ID:", packet.id);
+      console.log("Số bit ESP32 báo đã gửi:", espPayloadBits, "bit");
+      console.log("Số bit web nhận được:", webReceivedBits, "bit");
+      console.log("Số bit web phản hồi ACK:", ackBits, "bit");
+    });
+
+    onValue(ref(database, 'LatencyTest/esp_to_web/result'), (snapshot) => {
+      const result = snapshot.val();
+      if (!result || result.id === undefined) return;
+
+      setText("latencyPacketId", result.id);
+      setText("latencyRtt", Number(result.rtt_ms || 0).toFixed(0) + " ms");
+      setText("latencyOneWay", Number(result.one_way_ms || 0).toFixed(2) + " ms");
+      setText("latencyAverage", Number(result.average_one_way_ms || 0).toFixed(2) + " ms");
+      setText("espSendBits", Number(result.esp_send_bits || 0) + " bit");
+      setText("webReceiveBits", Number(result.web_receive_bits || 0) + " bit");
+      setText("webAckBits", Number(result.web_ack_bits || 0) + " bit");
+      setText("espAckReceiveBits", Number(result.esp_ack_receive_bits || 0) + " bit");
+
+      console.log("========== KẾT QUẢ ĐO TỪ ESP32 ==========");
+      console.log("Packet ID:", result.id);
+      console.log("RTT:", result.rtt_ms, "ms");
+      console.log("Độ trễ RTT/2:", result.one_way_ms, "ms");
+      console.log("ESP32 gửi:", result.esp_send_bits, "bit");
+      console.log("Web nhận:", result.web_receive_bits, "bit");
+      console.log("Web ACK:", result.web_ack_bits, "bit");
+      console.log("ESP32 nhận ACK:", result.esp_ack_receive_bits, "bit");
+    });
+
+    // --- 5. ĐỒNG HỒ HIỂN THỊ THỜI GIAN THỰC ---
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").innerText = now.toLocaleTimeString('vi-VN') + " - " + now.toLocaleDateString('vi-VN');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+  </script>
+</body>
+</html>
